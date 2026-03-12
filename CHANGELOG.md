@@ -4,6 +4,7 @@ All notable changes to `ru-normalizr` will be documented in this file.
 
 The format is based on Keep a Changelog, and this project follows Semantic Versioning.
 
+
 ## [0.1.0] - 2026-03-11
 
 ### Added
@@ -22,10 +23,19 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 - Library test suite moved into `ru_normalizr/tests`.
 - Package metadata, typing marker, and wheel build support.
 - PEP8 formatted.
+- `NormalizeOptions.safe()` and `NormalizeOptions.tts()` presets.
+- Granular abbreviation toggles for contextual abbreviations, initials, and letter-by-letter expansions.
+- Optional IPA stress marker output controlled by `enable_latinization_stress_marks`.
+- CLI support for `--mode safe|tts` and `--with-latin-stress`.
+
 
 ### Changed
 - Consolidated morphology loading through a shared cached helper.
 - Expanded parity coverage against legacy normalization behavior.
+- `NormalizeOptions()` now defaults to the conservative `safe` preset.
+- TTS-oriented behavior is now explicit through `NormalizeOptions.tts()` or `--mode tts`.
+- Latinization rules were moved to `ru_normalizr/dictionaries/latinization/latinization_rules.dic`.
+- General dictionary normalization no longer implicitly loads the latinization dictionary subtree unless it is explicitly requested.
 
 ### Notes
 - TTS-specific pause hacks, pronunciation logic, accentization, and audio/model integration remain intentionally out of scope. ru-normalizr is only handling book normalization.

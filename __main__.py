@@ -31,9 +31,14 @@ def build_parser() -> argparse.ArgumentParser:
         "--check", action="store_true", help="Normalize input and print the result."
     )
     parser.add_argument(
+        "--mode",
+        choices=["safe", "tts"],
+        default="safe",
+        help="Preset normalization mode.",
+    )
+    parser.add_argument(
         "--latinization-backend",
         choices=["ipa", "dictionary"],
-        default="ipa",
         help="Backend for Latin transliteration.",
     )
     parser.add_argument(
@@ -45,6 +50,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--keep-links", action="store_true", help="Keep bracketed numeric links."
     )
+    parser.add_argument(
+        "--with-latin-stress",
+        action="store_true",
+        help="Keep '+' stress markers when using IPA latinization.",
+    )
     return parser
 
 
@@ -53,10 +63,12 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     text = _read_input(args)
     options = NormalizeOptions(
-        enable_first_word_decap=not args.no_first_word_decap,
-        remove_links=not args.keep_links,
-        enable_latinization=not args.no_latinization,
+        mode=args.mode,
+        enable_first_word_decap=False if args.no_first_word_decap else None,
+        remove_links=False if args.keep_links else None,
+        enable_latinization=False if args.no_latinization else None,
         latinization_backend=args.latinization_backend,
+        enable_latinization_stress_marks=args.with_latin_stress,
     )
     result = normalize(text, options)
     if args.output:

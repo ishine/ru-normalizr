@@ -236,6 +236,7 @@ class PipelineNormalizer:
             backend=self.options.latinization_backend,
             dictionaries_path=self.dictionaries_path,
             dictionary_filename=self.options.latin_dictionary_filename,
+            include_stress_markers=self.options.enable_latinization_stress_marks,
         )
 
     def run_finalize(self, text: str) -> str:

@@ -8,6 +8,24 @@ from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
+_DICTIONARY_CACHE_VERSION = "v2"
+
+
+def _compile_simple_mapping_patterns(
+    mapping: dict[str, str],
+) -> list[tuple[re.Pattern[str], str]]:
+    patterns: list[tuple[re.Pattern[str], str]] = []
+    for key in sorted(mapping.keys(), key=len, reverse=True):
+        patterns.append(
+            (
+                re.compile(
+                    rf"(?<!\w){re.escape(key)}(?!\w)",
+                    re.UNICODE | re.IGNORECASE,
+                ),
+                mapping[key],
+            )
+        )
+    return patterns
 
 
 class DictionaryNormalizer:
@@ -34,7 +52,7 @@ class DictionaryNormalizer:
             self._save_to_cache()
 
     def _get_cache_path(self) -> Path:
-        base = "dictionaries"
+        base = f"dictionaries_{_DICTIONARY_CACHE_VERSION}"
         if self.include_only_files:
             import hashlib
 
@@ -57,11 +75,13 @@ class DictionaryNormalizer:
             return False
         try:
             cache_mtime = cache_path.stat().st_mtime
-            for dic_file in self.dictionaries_path.glob("*.dic"):
+            for dic_file in self.dictionaries_path.rglob("*.dic"):
                 if dic_file.stat().st_mtime > cache_mtime:
                     return False
             with cache_path.open("rb") as fh:
                 data = pickle.load(fh)
+            if data.get("cache_version") != _DICTIONARY_CACHE_VERSION:
+                return False
             if set(data.get("exclude_files", [])) != self.exclude_files:
                 return False
             if set(data.get("include_only_files", [])) != self.include_only_files:
@@ -80,6 +100,7 @@ class DictionaryNormalizer:
                     {
                         "rules": self._file_rules,
                         "dic_count": self._total_dic,
+                        "cache_version": _DICTIONARY_CACHE_VERSION,
                         "exclude_files": list(self.exclude_files),
                         "include_only_files": list(self.include_only_files),
                     },
@@ -91,11 +112,17 @@ class DictionaryNormalizer:
     def _load_all_dictionaries(self) -> None:
         if not self.dictionaries_path.exists():
             return
-        files = sorted(self.dictionaries_path.glob("*.dic"), key=lambda item: item.name)
+        files = sorted(self.dictionaries_path.rglob("*.dic"))
         for filepath in files:
-            if self.include_only_files and filepath.name not in self.include_only_files:
+            relative_name = filepath.relative_to(self.dictionaries_path).as_posix()
+            if not self.include_only_files and relative_name.startswith("latinization/"):
                 continue
-            if filepath.name in self.exclude_files:
+            if self.include_only_files and (
+                filepath.name not in self.include_only_files
+                and relative_name not in self.include_only_files
+            ):
+                continue
+            if filepath.name in self.exclude_files or relative_name in self.exclude_files:
                 continue
             try:
                 chunks = self._load_dic_file(filepath)
@@ -181,6 +208,15 @@ class DictionaryNormalizer:
     def _dic_pattern_to_regex(
         self, source: str, target: str, anchor_start: bool = False
     ) -> tuple[str, str]:
+        # Treat *foo* as an in-word substring replacement so regex.sub can
+        # replace every occurrence across the text, not just one fragment
+        # inside a whitespace token.
+        if source.startswith("*") and source.endswith("*") and source.count("*") == 2:
+            pattern = re.escape(source[1:-1])
+            if anchor_start:
+                pattern = "^" + pattern
+            return pattern, target
+
         parts = source.split("*")
         regex_parts: list[str] = []
         replacement_parts = [target]
@@ -218,17 +254,9 @@ class DictionaryNormalizer:
         return pattern, "".join(replacement_parts)
 
     def _apply_simple_chunk(self, text: str, mapping: dict[str, str]) -> str:
-        tokens = re.split(r"(\s+)", text)
-        modified = False
-        for index in range(0, len(tokens), 2):
-            token = tokens[index]
-            if not token:
-                continue
-            replacement = mapping.get(token.lower())
-            if replacement is not None:
-                tokens[index] = replacement
-                modified = True
-        return "".join(tokens) if modified else text
+        for pattern, replacement in _compile_simple_mapping_patterns(mapping):
+            text = pattern.sub(replacement, text)
+        return text
 
     def _apply_dic_rules(self, text: str, chunks: list[tuple[str, Any]]) -> str:
         for chunk_type, chunk_data in chunks:

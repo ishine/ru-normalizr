@@ -7,6 +7,7 @@ from pathlib import Path
 from .dictionary import DictionaryNormalizer
 
 DEFAULT_DICTIONARIES_PATH = Path(__file__).resolve().parent / "dictionaries"
+DEFAULT_LATINIZATION_DICTIONARIES_PATH = DEFAULT_DICTIONARIES_PATH / "latinization"
 
 # Order matters.
 IPA_MAP = [
@@ -125,14 +126,14 @@ def move_stress_marker_ru(text: str) -> str:
     return "".join(result)
 
 
-def _ipa_to_russian(ipa_text: str) -> str:
+def _ipa_to_russian(ipa_text: str, include_stress_markers: bool = False) -> str:
     ipa_text = ipa_text.replace("ˌ", "")
     ipa_text = handle_long_vowels(ipa_text)
     for ipa_char, ru_char in IPA_MAP:
         ipa_text = ipa_text.replace(ipa_char, ru_char)
     ipa_text = ipa_text.replace("ː", "")
     ipa_text = move_stress_marker_ru(ipa_text)
-    return ipa_text.replace("ˈ", "+")
+    return ipa_text.replace("ˈ", "+" if include_stress_markers else "")
 
 
 def _apply_dictionary_latinization(
@@ -142,7 +143,29 @@ def _apply_dictionary_latinization(
     return normalizer.apply(text, strip_unmatched_latin=False)
 
 
-def _apply_ipa_latinization(text: str, dictionaries_path: Path, filename: str) -> str:
+def _resolve_latinization_dictionary_path(
+    dictionaries_path: Path | None, filename: str
+) -> Path:
+    if dictionaries_path is None:
+        return DEFAULT_LATINIZATION_DICTIONARIES_PATH
+
+    if (dictionaries_path / filename).exists():
+        return dictionaries_path
+
+    nested_path = dictionaries_path / "latinization"
+    if (nested_path / filename).exists():
+        return nested_path
+
+    return dictionaries_path
+
+
+def _apply_ipa_latinization(
+    text: str,
+    dictionaries_path: Path,
+    filename: str,
+    *,
+    include_stress_markers: bool,
+) -> str:
     try:
         import eng_to_ipa  # noqa: F401
     except ImportError:
@@ -158,7 +181,9 @@ def _apply_ipa_latinization(text: str, dictionaries_path: Path, filename: str) -
                     fallback, dictionaries_path, filename
                 )
             return fallback
-        return _ipa_to_russian(ipa_text)
+        return _ipa_to_russian(
+            ipa_text, include_stress_markers=include_stress_markers
+        )
 
     return re.sub(r"[A-Za-z][A-Za-z'\-]*", replace, text)
 
@@ -170,14 +195,22 @@ def apply_latinization(
     backend: str,
     dictionaries_path: Path | None = None,
     dictionary_filename: str = "latinization_rules.dic",
+    include_stress_markers: bool = False,
 ) -> str:
     if not enabled or not re.search(r"[A-Za-z]", text):
         return text
 
-    dict_path = dictionaries_path or DEFAULT_DICTIONARIES_PATH
+    dict_path = _resolve_latinization_dictionary_path(
+        dictionaries_path, dictionary_filename
+    )
     backend_name = backend.lower()
     if backend_name == "dictionary":
         return _apply_dictionary_latinization(text, dict_path, dictionary_filename)
     if backend_name == "ipa":
-        return _apply_ipa_latinization(text, dict_path, dictionary_filename)
+        return _apply_ipa_latinization(
+            text,
+            dict_path,
+            dictionary_filename,
+            include_stress_markers=include_stress_markers,
+        )
     return text

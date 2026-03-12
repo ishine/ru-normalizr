@@ -5,7 +5,7 @@ Normalization-only Russian text preprocessing extracted into a standalone packag
 `ru-normalizr` focuses on deterministic Russian text normalization:
 - years, dates, time, decimals, fractions, ordinals, and cardinal numerals
 - abbreviations, initials, Roman numerals, cleanup rules, and glued OCR-like text
-- optional Latin transliteration via dictionary or `eng_to_ipa`
+- Latin transliteration via dictionary rules or `eng_to_ipa`
 
 Out of scope by design:
 - accentization and stress dictionaries
@@ -15,17 +15,11 @@ Out of scope by design:
 
 ## Installation
 
-Core install:
-
 ```bash
 pip install ru-normalizr
 ```
 
-With IPA-based Latin handling:
-
-```bash
-pip install "ru-normalizr[ipa]"
-```
+`eng_to_ipa` is installed by default, so the IPA backend is available out of the box.
 
 ## API
 
@@ -35,14 +29,9 @@ from ru_normalizr import NormalizeOptions, Normalizer, normalize, preprocess_tex
 text = normalize("Глава IV. Встреча в 10:07.")
 prepared = preprocess_text("10кг")
 
-normalizer = Normalizer(
-    NormalizeOptions(
-        enable_latinization=False,
-        enable_first_word_decap=True,
-    )
-)
-batch = normalizer.normalize_batch(["Глава IV.", "В 1980-е годы было 25 млн."])
-roman_only = normalizer.run_stage("roman", "Глава IV")
+tts_normalizer = Normalizer(NormalizeOptions.tts())
+batch = tts_normalizer.normalize_batch(["Глава IV.", "В 1980-е годы было 25 млн."])
+roman_only = tts_normalizer.run_stage("roman", "Глава IV")
 ```
 
 ### Example outputs
@@ -63,23 +52,69 @@ print(normalize("И. О. Фамилия приехал."))
 # и о фамилия приехал.
 ```
 
+### Modes
+
+`NormalizeOptions()` uses the conservative `safe` preset by default.
+Use `NormalizeOptions.tts()` when you want the more aggressive TTS-oriented behavior.
+
+`safe` is intended for general text where it is more important not to over-normalize:
+- keeps all-caps headings as-is
+- keeps initials like `И. О. Фамилия`
+- keeps letter abbreviations like `ГИБДД`
+- keeps bracketed numeric links like `(1)` and `[1]`
+- keeps Latin transliteration disabled
+
+`tts` is intended for speech-oriented pipelines:
+- enables caps normalization and first-word decap
+- removes confident bracketed numeric links
+- expands initials and letter-by-letter abbreviations
+- enables Latin transliteration
+- keeps IPA stress markers disabled by default unless explicitly requested
+
 ### Configuring options
 
 ```python
 from ru_normalizr import NormalizeOptions, normalize
 
-options = NormalizeOptions(
-    enable_latinization=False,
-    enable_dictionary_normalization=False,
-    enable_first_word_decap=True,
+options = NormalizeOptions.tts(
+    latinization_backend="ipa",
+    enable_latinization_stress_marks=False,
 )
 
 print(normalize("YouTube в 2024 г.", options))
 ```
 
+You can also start from the conservative preset and override individual flags:
+
+```python
+from ru_normalizr import NormalizeOptions, normalize
+
+options = NormalizeOptions.safe(
+    enable_letter_abbreviation_expansion=True,
+    enable_latinization=True,
+    latinization_backend="dictionary",
+)
+
+print(normalize("USB drive", options))
+```
+
+Granular abbreviation controls:
+- `enable_contextual_abbreviation_expansion` for contextual abbreviations such as `т. д.`, `т. п.`, `млн.`, `тыс.`
+- `enable_initials_expansion` for patterns such as `И. О. Фамилия`
+- `enable_letter_abbreviation_expansion` for letter-by-letter expansions such as `ГИБДД`, `ООН`, `USB`
+
+Latinization controls:
+- `enable_latinization`
+- `latinization_backend="ipa" | "dictionary"`
+- `enable_latinization_stress_marks`
+
+When `latinization_backend="ipa"`, stress markers are omitted by default.
+Enable `enable_latinization_stress_marks=True` if you want `+` markers in the output.
+
 ### Example dictionaries
 
 Runtime dictionary assets shipped in the package live under `ru_normalizr/dictionaries/`.
+Latinization rules live under `ru_normalizr/dictionaries/latinization/`.
 The editable example override file lives in `examples/your_rules.dic` in the source tree and is not included in published wheels.
 
 ### Batch usage
@@ -87,7 +122,7 @@ The editable example override file lives in `examples/your_rules.dic` in the sou
 ```python
 from ru_normalizr import Normalizer
 
-normalizer = Normalizer()
+normalizer = Normalizer(NormalizeOptions.tts())
 texts = ["Глава IV.", "12.03.2025", "Цена 1.5 кг сахара."]
 print(normalizer.normalize_batch(texts))
 ```
@@ -110,10 +145,19 @@ Stage order is fixed in the main pipeline. Stage-level calls are for debugging, 
 ```bash
 python -m ru_normalizr "Глава IV. Встреча в 10:07."
 echo "В 1980-е годы было 25 млн." | python -m ru_normalizr
-ru-normalizr --file ./sample.txt
-ru-normalizr --file ./sample.txt --output ./sample.normalized.txt
-ru-normalizr --no-latinization "YouTube в 2024 г."
+ru-normalizr --mode safe "ГИБДД"
+ru-normalizr --mode tts --file ./sample.txt
+ru-normalizr --mode tts --file ./sample.txt --output ./sample.normalized.txt
+ru-normalizr --mode tts --latinization-backend ipa --with-latin-stress "YouTube в 2024 г."
 ```
+
+Useful CLI flags:
+- `--mode safe|tts`
+- `--latinization-backend ipa|dictionary`
+- `--with-latin-stress`
+- `--no-latinization`
+- `--no-first-word-decap`
+- `--keep-links`
 
 ## Development
 

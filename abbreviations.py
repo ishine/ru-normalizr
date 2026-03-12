@@ -158,8 +158,12 @@ def expand_abbreviations(text: str, options: NormalizeOptions | None = None) -> 
     active = options or NormalizeOptions()
     if not active.enable_abbreviation_expansion:
         return text
-    text = _expand_contextual_etc_abbreviations(text)
-    for pattern, replacement in ABBREVIATION_PATTERNS:
-        text = pattern.sub(replacement, text)
-    text = expand_person_initials(text)
-    return expand_letter_abbreviations(text)
+    if active.enable_contextual_abbreviation_expansion:
+        text = _expand_contextual_etc_abbreviations(text)
+        for pattern, replacement in ABBREVIATION_PATTERNS:
+            text = pattern.sub(replacement, text)
+    if active.enable_initials_expansion:
+        text = expand_person_initials(text)
+    if active.enable_letter_abbreviation_expansion:
+        text = expand_letter_abbreviations(text)
+    return text

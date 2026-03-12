@@ -33,7 +33,7 @@ class RuNormalizrApiTests(unittest.TestCase):
 
     def test_normalize_runs_roman_before_caps_normalization(self):
         self.assertEqual(
-            normalize("ГЛАВА IV."),
+            normalize("ГЛАВА IV.", NormalizeOptions.tts()),
             "Глава четыре.",
         )
 
@@ -109,7 +109,7 @@ class RuNormalizrApiTests(unittest.TestCase):
         self.assertEqual(
             preprocess_text(
                 "АВТОМОБИЛЬ ДЖИП («ВИЛЛИС»), легкий полноприводной вездеход."
-            ),
+            , NormalizeOptions.tts()),
             'Автомобиль джип ("виллис"), легкий полноприводной вездеход.',
         )
 
@@ -117,7 +117,7 @@ class RuNormalizrApiTests(unittest.TestCase):
         self.assertEqual(
             preprocess_text(
                 "АВТОМОБИЛЬ С КОМПЬЮТЕРНЫМ УПРАВЛЕНИЕМ ТРАНСМИССИЕЙ, выпустила на рынок японская компания."
-            ),
+            , NormalizeOptions.tts()),
             "Автомобиль С Компьютерным управлением трансмиссией, выпустила на рынок японская компания.",
         )
 
@@ -125,7 +125,7 @@ class RuNormalizrApiTests(unittest.TestCase):
         self.assertEqual(
             preprocess_text(
                 "АВТОРУЧКА С КЕРАМИЧЕСКИМ ПЕРОМ, выпустила на рынок японская компания."
-            ),
+            , NormalizeOptions.tts()),
             "Авторучка С Керамическим пером, выпустила на рынок японская компания.",
         )
 
@@ -133,7 +133,7 @@ class RuNormalizrApiTests(unittest.TestCase):
         self.assertEqual(
             preprocess_text(
                 "БАТАРЕЙКА ЭЛЕКТРИЧЕСКАЯ ПЛАСТМАССОВАЯ, сконструирована американскими учеными."
-            ),
+            , NormalizeOptions.tts()),
             "Батарейка электрическая пластмассовая, сконструирована американскими учеными.",
         )
 
@@ -164,7 +164,7 @@ class RuNormalizrApiTests(unittest.TestCase):
         self,
     ):
         self.assertEqual(
-            preprocess_text("МЕЖДУНАРОДНАЯ ШКАЛА\n541 млн л. н."),
+            preprocess_text("МЕЖДУНАРОДНАЯ ШКАЛА\n541 млн л. н.", NormalizeOptions.tts()),
             "Международная шкала.\n541 млн лет назад.",
         )
 
@@ -176,7 +176,7 @@ class RuNormalizrApiTests(unittest.TestCase):
 
     def test_normalize_expands_years_ago_before_unit_normalization(self):
         self.assertEqual(
-            normalize("МЕЖДУНАРОДНАЯ ШКАЛА\n541 млн л. н."),
+            normalize("МЕЖДУНАРОДНАЯ ШКАЛА\n541 млн л. н.", NormalizeOptions.tts()),
             "Международная шкала. пятьсот сорок один миллион лет назад.",
         )
 
@@ -218,7 +218,7 @@ class RuNormalizrApiTests(unittest.TestCase):
                 "Чего пока не хватало кембрийским хордовым, так это чешуи и зубов. "
             ),
             "первый шаг в сторону обретения челюстей.\n"
-            "мэтэспаригджинэ вэлсоттай.\n\n"
+            "мэтэспригджинэ вэлкоттай.\n\n"
             "Чего пока не хватало кембрийским хордовым, так это чешуи и зубов.",
         )
 
@@ -241,11 +241,12 @@ class RuNormalizrApiTests(unittest.TestCase):
         self.assertEqual(preprocess_text("(500,5 кг)"), "(500,5 кг)")
 
     def test_preprocess_text_removes_confident_bracketed_references(self):
-        self.assertEqual(preprocess_text("(1)"), "")
-        self.assertEqual(preprocess_text("(1, 3, 5)"), "")
-        self.assertEqual(preprocess_text("(1–3)"), "")
-        self.assertEqual(preprocess_text("(2.5)"), "")
-        self.assertEqual(preprocess_text("(2.5.1)"), "")
+        options = NormalizeOptions.tts()
+        self.assertEqual(preprocess_text("(1)", options), "")
+        self.assertEqual(preprocess_text("(1, 3, 5)", options), "")
+        self.assertEqual(preprocess_text("(1–3)", options), "")
+        self.assertEqual(preprocess_text("(2.5)", options), "")
+        self.assertEqual(preprocess_text("(2.5.1)", options), "")
 
     def test_normalize_keeps_cyrillic_measurements_out_of_roman_stage(self):
         self.assertEqual(
@@ -313,8 +314,108 @@ class RuNormalizrApiTests(unittest.TestCase):
 
     def test_normalize_syncs_legacy_gibdd_abbreviation_reading(self):
         self.assertEqual(
-            normalize("ГИБДД"),
+            normalize("ГИБДД", NormalizeOptions.tts()),
             "ги бэ дэ дэ",
+        )
+
+    def test_safe_mode_keeps_caps_and_letter_abbreviations_conservative(self):
+        self.assertEqual(normalize("ГЛАВА IV.", NormalizeOptions.safe()), "ГЛАВА четыре.")
+        self.assertEqual(normalize("ГИБДД", NormalizeOptions.safe()), "ГИБДД")
+
+    def test_mode_helpers_apply_expected_defaults(self):
+        safe = NormalizeOptions.safe()
+        tts = NormalizeOptions.tts()
+
+        self.assertFalse(safe.enable_caps_normalization)
+        self.assertFalse(safe.enable_initials_expansion)
+        self.assertFalse(safe.enable_letter_abbreviation_expansion)
+        self.assertFalse(safe.enable_latinization)
+        self.assertFalse(safe.remove_links)
+
+        self.assertTrue(tts.enable_caps_normalization)
+        self.assertTrue(tts.enable_initials_expansion)
+        self.assertTrue(tts.enable_letter_abbreviation_expansion)
+        self.assertTrue(tts.enable_latinization)
+        self.assertTrue(tts.remove_links)
+
+    def test_default_options_match_safe_preset_except_mode_marker(self):
+        default = NormalizeOptions()
+        safe = NormalizeOptions.safe()
+
+        self.assertEqual(default.enable_caps_normalization, safe.enable_caps_normalization)
+        self.assertEqual(default.enable_first_word_decap, safe.enable_first_word_decap)
+        self.assertEqual(default.remove_links, safe.remove_links)
+        self.assertEqual(default.remove_links_ignore_interval, safe.remove_links_ignore_interval)
+        self.assertEqual(default.enable_year_normalization, safe.enable_year_normalization)
+        self.assertEqual(default.enable_roman_normalization, safe.enable_roman_normalization)
+        self.assertEqual(
+            default.enable_dates_time_normalization, safe.enable_dates_time_normalization
+        )
+        self.assertEqual(default.enable_numeral_normalization, safe.enable_numeral_normalization)
+        self.assertEqual(default.enable_abbreviation_expansion, safe.enable_abbreviation_expansion)
+        self.assertEqual(
+            default.enable_contextual_abbreviation_expansion,
+            safe.enable_contextual_abbreviation_expansion,
+        )
+        self.assertEqual(default.enable_initials_expansion, safe.enable_initials_expansion)
+        self.assertEqual(
+            default.enable_letter_abbreviation_expansion,
+            safe.enable_letter_abbreviation_expansion,
+        )
+        self.assertEqual(
+            default.enable_dictionary_normalization, safe.enable_dictionary_normalization
+        )
+        self.assertEqual(default.enable_latinization, safe.enable_latinization)
+        self.assertEqual(default.latinization_backend, safe.latinization_backend)
+        self.assertEqual(
+            default.enable_latinization_stress_marks,
+            safe.enable_latinization_stress_marks,
+        )
+        self.assertEqual(default.latin_dictionary_filename, safe.latin_dictionary_filename)
+        self.assertEqual(default.dictionary_include_files, safe.dictionary_include_files)
+        self.assertEqual(default.dictionary_exclude_files, safe.dictionary_exclude_files)
+        self.assertEqual(default.dictionaries_path, safe.dictionaries_path)
+        self.assertIsNone(default.mode)
+        self.assertEqual(safe.mode, "safe")
+
+    def test_default_and_safe_have_same_observable_behavior(self):
+        text = "ГЛАВА IV. ГИБДД (1)"
+
+        self.assertEqual(normalize(text), normalize(text, NormalizeOptions.safe()))
+        self.assertEqual(
+            preprocess_text("(1)", NormalizeOptions()),
+            preprocess_text("(1)", NormalizeOptions.safe()),
+        )
+
+    def test_tts_differs_from_default_on_key_behavior(self):
+        self.assertEqual(normalize("ГИБДД"), "ГИБДД")
+        self.assertEqual(normalize("ГИБДД", NormalizeOptions.safe()), "ГИБДД")
+        self.assertEqual(normalize("ГИБДД", NormalizeOptions.tts()), "ги бэ дэ дэ")
+
+        self.assertEqual(preprocess_text("(1)", NormalizeOptions()), "(один)")
+        self.assertEqual(preprocess_text("(1)", NormalizeOptions.safe()), "(один)")
+        self.assertEqual(preprocess_text("(1)", NormalizeOptions.tts()), "")
+
+    def test_tts_mode_can_enable_ipa_stress_markers_explicitly(self):
+        self.assertEqual(
+            normalize(
+                "engineering",
+                NormalizeOptions.tts(
+                    latinization_backend="ipa",
+                    enable_latinization_stress_marks=False,
+                ),
+            ),
+            "энджэнирин",
+        )
+        self.assertEqual(
+            normalize(
+                "engineering",
+                NormalizeOptions.tts(
+                    latinization_backend="ipa",
+                    enable_latinization_stress_marks=True,
+                ),
+            ),
+            "+энджэн+ирин",
         )
 
     def test_run_stage_supports_targeted_stage_access(self):
@@ -326,7 +427,9 @@ class RuNormalizrApiTests(unittest.TestCase):
         package_dir = Path(__import__("ru_normalizr").__file__).resolve().parent
 
         self.assertTrue((package_dir / "py.typed").exists())
-        self.assertTrue((package_dir / "dictionaries" / "latinization_rules.dic").exists())
+        self.assertTrue(
+            (package_dir / "dictionaries" / "latinization" / "latinization_rules.dic").exists()
+        )
         self.assertTrue((package_dir / "numerals" / "__init__.py").exists())
         self.assertFalse((package_dir / "dictionaries" / "your_rules.dic").exists())
 
@@ -360,7 +463,10 @@ class RuNormalizrApiTests(unittest.TestCase):
                 wheel_names = set(wheel_file.namelist())
 
             self.assertIn("ru_normalizr/py.typed", wheel_names)
-            self.assertIn("ru_normalizr/dictionaries/latinization_rules.dic", wheel_names)
+            self.assertIn(
+                "ru_normalizr/dictionaries/latinization/latinization_rules.dic",
+                wheel_names,
+            )
             self.assertIn("ru_normalizr/numerals/__init__.py", wheel_names)
             self.assertNotIn("ru_normalizr/preprocess.py", wheel_names)
             self.assertNotIn("ru_normalizr/dictionaries/your_rules.dic", wheel_names)
@@ -375,7 +481,7 @@ class RuNormalizrApiTests(unittest.TestCase):
         options = NormalizeOptions(
             enable_latinization=False,
             enable_dictionary_normalization=True,
-            dictionary_include_files=("latinization_rules.dic",),
+            dictionary_include_files=("latinization/latinization_rules.dic",),
         )
 
         result = normalize("YouTube", options)
@@ -415,6 +521,16 @@ class RuNormalizrCliTests(unittest.TestCase):
 
             self.assertEqual(completed.stdout, "")
             self.assertEqual(output_path.read_text(encoding="utf-8"), "Глава четыре.\n")
+
+    def test_cli_tts_mode_enables_letter_abbreviation_expansion(self):
+        completed = subprocess.run(
+            [sys.executable, "-m", "ru_normalizr", "--mode", "tts", "ГИБДД"],
+            text=True,
+            capture_output=True,
+            check=True,
+        )
+
+        self.assertIn("ги бэ дэ дэ", completed.stdout)
 
 
 if __name__ == "__main__":

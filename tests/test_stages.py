@@ -1,5 +1,6 @@
 import unittest
 
+from ru_normalizr import NormalizeOptions
 from ru_normalizr.abbreviations import expand_abbreviations
 from ru_normalizr.dates_time import normalize_dates_and_time
 from ru_normalizr.numbering import convert_bracketed_numbers
@@ -124,7 +125,9 @@ class RuNormalizrStageTests(unittest.TestCase):
         )
 
     def test_bracketed_number_stage_respects_link_removal(self):
-        self.assertEqual(convert_bracketed_numbers("Текст [1]"), "Текст ")
+        self.assertEqual(
+            convert_bracketed_numbers("Текст [1]", NormalizeOptions.tts()), "Текст "
+        )
 
     def test_bracketed_number_stage_keeps_comma_decimals(self):
         self.assertEqual(convert_bracketed_numbers("Текст (500,5)"), "Текст (500,5)")
@@ -141,12 +144,13 @@ class RuNormalizrStageTests(unittest.TestCase):
         )
 
     def test_bracketed_number_stage_removes_confident_references(self):
-        self.assertEqual(convert_bracketed_numbers("Текст (1)"), "Текст ")
-        self.assertEqual(convert_bracketed_numbers("Текст (12)"), "Текст ")
-        self.assertEqual(convert_bracketed_numbers("Текст (1, 3, 5)"), "Текст ")
-        self.assertEqual(convert_bracketed_numbers("Текст (1–3)"), "Текст ")
-        self.assertEqual(convert_bracketed_numbers("Текст (2.5)"), "Текст ")
-        self.assertEqual(convert_bracketed_numbers("Текст (2.5.1)"), "Текст ")
+        options = NormalizeOptions.tts()
+        self.assertEqual(convert_bracketed_numbers("Текст (1)", options), "Текст ")
+        self.assertEqual(convert_bracketed_numbers("Текст (12)", options), "Текст ")
+        self.assertEqual(convert_bracketed_numbers("Текст (1, 3, 5)", options), "Текст ")
+        self.assertEqual(convert_bracketed_numbers("Текст (1–3)", options), "Текст ")
+        self.assertEqual(convert_bracketed_numbers("Текст (2.5)", options), "Текст ")
+        self.assertEqual(convert_bracketed_numbers("Текст (2.5.1)", options), "Текст ")
 
 
 if __name__ == "__main__":

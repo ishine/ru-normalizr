@@ -1,6 +1,6 @@
 import unittest
 
-from ru_normalizr import normalize
+from ru_normalizr import NormalizeOptions, normalize
 from ru_normalizr.numerals import simple_tokenize
 
 
@@ -16,10 +16,11 @@ class RuNormalizrHyphenTokenTests(unittest.TestCase):
         self.assertEqual(simple_tokenize("5-й"), ["5", "-", "й"])
 
     def test_normalize_preserves_hyphen_in_letter_digit_compounds(self):
-        self.assertEqual(normalize("COVID-19"), "ковид-девятнадцать")
-        self.assertEqual(normalize("Т-34"), "Т-тридцать четыре")
-        self.assertEqual(normalize("B52G"), "би пятьдесят два-джи")
-        self.assertEqual(normalize("Z80A"), "зи восемьдесят-э")
+        options = NormalizeOptions.tts()
+        self.assertEqual(normalize("COVID-19", options), "ковид-девятнадцать")
+        self.assertEqual(normalize("Т-34", options), "Т-тридцать четыре")
+        self.assertEqual(normalize("B52G", options), "би пятьдесят два-джи")
+        self.assertEqual(normalize("Z80A", options), "зи восемьдесят-э")
 
 
 if __name__ == "__main__":

@@ -22,6 +22,7 @@ classifiers = [
   "Topic :: Text Processing :: Linguistic",
 ]
 dependencies = [
+  "eng_to_ipa==0.0.2",
   "num2words>=0.5.13",
   "pymorphy3>=2.0",
   "pymorphy3-dicts-ru>=2.0",
@@ -34,9 +35,6 @@ Repository = "https://github.com/NickZaitsev/ru-normalizr"
 Issues = "https://github.com/NickZaitsev/ru-normalizr/issues"
 Changelog = "https://github.com/NickZaitsev/ru-normalizr/blob/main/CHANGELOG.md"
 
-[project.optional-dependencies]
-ipa = ["eng_to_ipa"]
-
 [project.scripts]
 ru-normalizr = "ru_normalizr.__main__:main"
 
@@ -48,7 +46,7 @@ include-package-data = false
 ru_normalizr = "."
 
 [tool.setuptools.package-data]
-ru_normalizr = ["py.typed", "dictionaries/latinization_rules.dic"]
+ru_normalizr = ["py.typed", "dictionaries/latinization/latinization_rules.dic"]
 
 [tool.setuptools.exclude-package-data]
 ru_normalizr = [
