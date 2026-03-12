@@ -34,6 +34,12 @@ class RuNormalizrStageTests(unittest.TestCase):
             "CD-плеер и CD",
         )
 
+    def test_roman_stage_keeps_configured_roman_exceptions(self):
+        self.assertEqual(
+            normalize_roman("DC MD CV CI DI MC CM MM"),
+            "DC MD CV CI DI MC CM MM",
+        )
+
     def test_dates_time_stage(self):
         self.assertEqual(
             normalize_dates_and_time("Встреча в 10:07."),

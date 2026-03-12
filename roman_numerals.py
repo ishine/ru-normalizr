@@ -8,7 +8,17 @@ from .constants import KNOWN_ABBREVIATIONS
 from .options import NormalizeOptions
 
 _ROMAN_ABBREVIATION_EXCEPTIONS = frozenset(
-    abbr for abbr in KNOWN_ABBREVIATIONS if re.fullmatch(r"[A-Z-]+", abbr)
+    {
+        *(abbr for abbr in KNOWN_ABBREVIATIONS if re.fullmatch(r"[A-Z-]+", abbr)),
+        "DC",
+        "MD",
+        "CV",
+        "CI",
+        "DI",
+        "MC",
+        "CM",
+        "MM",
+    }
 )
 
 
