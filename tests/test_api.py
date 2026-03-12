@@ -273,6 +273,16 @@ class RuNormalizrApiTests(unittest.TestCase):
             "характерны гигантские медузоиды до тридцати — сорока сантиметров в диаметре и перистовидные колонии",
         )
 
+    def test_normalize_expands_century_abbreviation_after_roman_numeral(self):
+        self.assertEqual(
+            normalize("от её начала до середины XIX в. у нас был ещё один институт"),
+            "от её начала до середины девятнадцатого века у нас был ещё один институт",
+        )
+        self.assertEqual(
+            normalize("от её начала до середины XIX в у нас был ещё один институт"),
+            "от её начала до середины девятнадцатого века у нас был ещё один институт",
+        )
+
     def test_normalize_treats_unary_minus_as_spoken_minus(self):
         self.assertEqual(
             normalize("при -20°C и -1 %"),

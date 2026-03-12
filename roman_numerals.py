@@ -4,7 +4,9 @@ import re
 
 import roman
 
+from ._morph import get_morph
 from .constants import KNOWN_ABBREVIATIONS
+from .numerals._helpers import get_numeral_case, simple_tokenize
 from .options import NormalizeOptions
 
 _ROMAN_ABBREVIATION_EXCEPTIONS = frozenset(
@@ -21,10 +23,32 @@ _ROMAN_ABBREVIATION_EXCEPTIONS = frozenset(
     }
 )
 
+_CENTURY_CASE_TO_ENDING = {
+    "nomn": "-й",
+    "accs": "-й",
+    "gent": "-го",
+    "datv": "-му",
+    "ablt": "-м",
+    "loct": "-м",
+}
+
+
+def _expand_century_abbreviation(text: str, match: re.Match[str], number: int) -> str:
+    morph = get_morph()
+    left_context = text[max(0, match.start() - 60) : match.start()]
+    right_context = text[match.end() : match.end() + 60]
+    tokens = simple_tokenize(left_context) + [str(number), "век"] + simple_tokenize(right_context)
+    case = get_numeral_case(tokens, len(simple_tokenize(left_context)))
+    ending = _CENTURY_CASE_TO_ENDING.get(case, "-й")
+    parsed = morph.parse("век")[0]
+    noun_form = parsed.inflect({case, "sing"})
+    century_word = noun_form.word if noun_form else "век"
+    return f"{number}{ending} {century_word}"
+
 
 def convert_roman_words(text: str) -> str:
     words = {
-        "в.": ("в.", "-й"),
+        "в.": ("век", "-й"),
         "век": ("век", "-й"),
         "века": ("века", "-го"),
         "веку": ("веку", "-му"),
@@ -67,7 +91,7 @@ def convert_roman_words(text: str) -> str:
         "кварталом": ("кварталом", "-м"),
         "кв.": ("квартал", "-й"),
         "кв": ("квартал", "-й"),
-        "в ": ("в ", ""),
+        "в": ("век", "-й"),
     }
     suffixes_regex = "|".join(map(re.escape, words.keys()))
     pattern = rf"\b([IVXLCDM]+)\s*({suffixes_regex})(?!\w)"
@@ -77,7 +101,10 @@ def convert_roman_words(text: str) -> str:
             number = roman.fromRoman(match.group(1).upper())
         except roman.InvalidRomanNumeralError:
             return match.group(0)
-        target_word, ending = words[match.group(2).lower()]
+        matched_suffix = match.group(2).lower()
+        if matched_suffix in {"в.", "в"}:
+            return _expand_century_abbreviation(text, match, number)
+        target_word, ending = words[matched_suffix]
         return f"{number}{ending} {target_word}"
 
     return re.sub(pattern, repl, text)

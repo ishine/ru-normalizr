@@ -293,70 +293,91 @@ def get_target_tags_for_number(
     return {case, "sing"} if form == "one" else {case, "plur"}
 
 
+def _normalize_context_token(token: str) -> str:
+    return token.lower().strip(".,!?;:")
+
+
+def _get_preposition_before_number(tokens: list[str], idx: int) -> tuple[str, str] | None:
+    max_prep_len = min(3, idx)
+    for prep_len in range(max_prep_len, 1, -1):
+        start = idx - prep_len
+        prep_tokens = [_normalize_context_token(token) for token in tokens[start:idx]]
+        if not all(prep_tokens):
+            continue
+        phrase = " ".join(prep_tokens)
+        if phrase in PREP_CASE:
+            return phrase, PREP_CASE[phrase]
+    for i in range(idx - 1, max(-1, idx - 3), -1):
+        word_left = _normalize_context_token(tokens[i])
+        if word_left in PREP_CASE:
+            return word_left, PREP_CASE[word_left]
+    return None
+
+
 def get_numeral_case(tokens: list[str], idx: int) -> str:
     morph = get_morph()
-    for i in range(idx - 1, max(-1, idx - 3), -1):
-        word_left = tokens[i].lower().strip(".,!?;:")
-        if word_left in PREP_CASE:
-            if word_left in {"с", "со"}:
-                for k in range(idx + 1, min(len(tokens), idx + 5)):
-                    if tokens[k].lower() in {"до", "по"}:
-                        return "gent"
-            if word_left in {"в", "на"}:
-                for j in range(idx + 1, min(len(tokens), idx + 6)):
-                    if any(char in tokens[j] for char in ".!?;:,"):
-                        break
-                    p = morph.parse(tokens[j])[0]
-                    if is_case_reliable_noun(p):
-                        if p.tag.case == "loct" or "loc2" in p.tag:
-                            return "loct"
-                        is_loc = p.inflect({"loct"})
-                        is_acc = p.inflect({"accs"})
-                        word_curr = tokens[j].lower()
-                        if is_loc and is_loc.word == word_curr:
-                            return "loct"
-                        if is_acc and is_acc.word == word_curr:
-                            return "accs"
-                    if "VERB" in p.tag or "INFN" in p.tag:
-                        break
-                for j in range(idx + 1, min(len(tokens), idx + 4)):
-                    p = morph.parse(tokens[j])[0]
-                    word_norm = p.normal_form
-                    if word_norm in set(TIME_WORDS) | {
-                        "январь",
-                        "февраль",
-                        "март",
-                        "апрель",
-                        "май",
-                        "июнь",
-                        "июль",
-                        "август",
-                        "сентябрь",
-                        "октябрь",
-                        "ноябрь",
-                        "декабрь",
-                    }:
-                        if is_integer_token(tokens[idx]):
-                            parsed_num = parse_integer_token(tokens[idx])
-                            if parsed_num is None:
-                                return "loct"
-                            _, unsigned = parsed_num
-                            val = int(unsigned)
-                            return "loct" if 1000 <= val <= 2100 else "accs"
+    prep_match = _get_preposition_before_number(tokens, idx)
+    if prep_match is not None:
+        word_left, prep_case = prep_match
+        if word_left in {"с", "со"}:
+            for k in range(idx + 1, min(len(tokens), idx + 5)):
+                if tokens[k].lower() in {"до", "по"}:
+                    return "gent"
+        if word_left in {"в", "на"}:
+            for j in range(idx + 1, min(len(tokens), idx + 6)):
+                if any(char in tokens[j] for char in ".!?;:,"):
+                    break
+                p = morph.parse(tokens[j])[0]
+                if is_case_reliable_noun(p):
+                    if p.tag.case == "loct" or "loc2" in p.tag:
                         return "loct"
+                    is_loc = p.inflect({"loct"})
+                    is_acc = p.inflect({"accs"})
+                    word_curr = tokens[j].lower()
+                    if is_loc and is_loc.word == word_curr:
+                        return "loct"
+                    if is_acc and is_acc.word == word_curr:
+                        return "accs"
+                if "VERB" in p.tag or "INFN" in p.tag:
+                    break
+            for j in range(idx + 1, min(len(tokens), idx + 4)):
+                p = morph.parse(tokens[j])[0]
+                word_norm = p.normal_form
+                if word_norm in set(TIME_WORDS) | {
+                    "январь",
+                    "февраль",
+                    "март",
+                    "апрель",
+                    "май",
+                    "июнь",
+                    "июль",
+                    "август",
+                    "сентябрь",
+                    "октябрь",
+                    "ноябрь",
+                    "декабрь",
+                }:
+                    if is_integer_token(tokens[idx]):
+                        parsed_num = parse_integer_token(tokens[idx])
+                        if parsed_num is None:
+                            return "loct"
+                        _, unsigned = parsed_num
+                        val = int(unsigned)
+                        return "loct" if 1000 <= val <= 2100 else "accs"
+                    return "loct"
+            return "accs"
+        if word_left == "по":
+            if is_integer_token(tokens[idx]):
+                parsed_num = parse_integer_token(tokens[idx])
+                if parsed_num is None:
+                    return "datv"
+                _, unsigned = parsed_num
+                val = int(unsigned)
+                if val % 10 == 1 and val % 100 != 11:
+                    return "datv"
                 return "accs"
-            if word_left == "по":
-                if is_integer_token(tokens[idx]):
-                    parsed_num = parse_integer_token(tokens[idx])
-                    if parsed_num is None:
-                        return "datv"
-                    _, unsigned = parsed_num
-                    val = int(unsigned)
-                    if val % 10 == 1 and val % 100 != 11:
-                        return "datv"
-                    return "accs"
-                return "datv"
-            return PREP_CASE[word_left]
+            return "datv"
+        return prep_case
 
     blocked_by_noun = False
     for i in range(idx - 1, max(-1, idx - 3), -1):

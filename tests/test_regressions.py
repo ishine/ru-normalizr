@@ -39,6 +39,18 @@ class RuNormalizrRegressionTests(unittest.TestCase):
         tokens = simple_tokenize("продал корову за 1000 долл.")
         self.assertEqual(get_numeral_case(tokens, tokens.index("1000")), "accs")
 
+    def test_multiword_preposition_po_povodu_uses_genitive_case(self):
+        tokens = simple_tokenize("спорили по поводу 5 вопросов")
+        self.assertEqual(get_numeral_case(tokens, tokens.index("5")), "gent")
+
+    def test_multiword_preposition_v_svyazi_s_uses_instrumental_case(self):
+        tokens = simple_tokenize("сообщение в связи с 5 случаями")
+        self.assertEqual(get_numeral_case(tokens, tokens.index("5")), "ablt")
+
+    def test_hyphenated_preposition_iz_za_uses_genitive_case(self):
+        tokens = simple_tokenize("отмена из-за 5 ошибок")
+        self.assertEqual(get_numeral_case(tokens, tokens.index("5")), "gent")
+
     def test_normalize_amount_with_thousands_abbreviation_after_na_summu(self):
         self.assertEqual(
             normalize(
@@ -57,6 +69,18 @@ class RuNormalizrRegressionTests(unittest.TestCase):
         self.assertEqual(
             normalize("Мне лучше иметь 1000 долл., чем корову."),
             "Мне лучше иметь одну тысячу долларов, чем корову.",
+        )
+
+    def test_normalize_numeral_after_multiword_preposition(self):
+        self.assertEqual(
+            normalize("Они говорили по поводу 5 вопросов."),
+            "Они говорили по поводу пяти вопросов.",
+        )
+
+    def test_normalize_numeral_after_instrumental_multiword_preposition(self):
+        self.assertEqual(
+            normalize("Заявление подали в связи с 5 случаями."),
+            "Заявление подали в связи с пятью случаями.",
         )
 
     def test_dictionary_latinization_regressions_keep_current_duplicate_rule_behavior(self):
