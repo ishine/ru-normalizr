@@ -188,6 +188,7 @@ def normalize_years(text: str, options: NormalizeOptions | None = None) -> str:
         suffix = m.group(2).lower()
         word = m.group(3)
         plural = suffix in PLURAL_SUFFIXES
+        case = YEAR_SUFFIX_TO_CASE.get(suffix, "nomn")
         if plural:
             if year < 100 and not word:
                 return m.group(0)
@@ -197,11 +198,18 @@ def normalize_years(text: str, options: NormalizeOptions | None = None) -> str:
             if not word and not (1000 <= year <= 2100):
                 return m.group(0)
             year = (year // 10) * 10
-        result = year_to_ordinal_words(
-            year, YEAR_SUFFIX_TO_CASE.get(suffix, "nomn"), plural
-        )
+        result = year_to_ordinal_words(year, case, plural)
         if word:
-            result += f" {word}"
+            word_lower = word.lower()
+            if word_lower == "г.":
+                word_norm = "год"
+                inflected = YEAR_WORD_FORMS.get((word_norm, case), word_norm)
+            elif re.fullmatch(YEAR_PLURAL_ABBREV_REGEX, word_lower):
+                word_norm = "годы"
+                inflected = YEAR_WORD_FORMS.get((word_norm, case), word_norm)
+            else:
+                inflected = word
+            result += f" {inflected}"
         return result
 
     def replace_with_word(m: re.Match[str]) -> str:

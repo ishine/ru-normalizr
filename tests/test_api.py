@@ -283,6 +283,18 @@ class RuNormalizrApiTests(unittest.TestCase):
             "от её начала до середины девятнадцатого века у нас был ещё один институт",
         )
 
+    def test_normalize_inflects_plural_year_abbreviation_in_decade_phrase(self):
+        self.assertEqual(
+            normalize("В начале 1960-х гг. стечение обстоятельств посеяло семена."),
+            "В начале тысяча девятьсот шестидесятых годов стечение обстоятельств посеяло семена.",
+        )
+
+    def test_normalize_expands_plural_year_abbreviation_to_gody_in_nominative(self):
+        self.assertEqual(
+            normalize("1960-е гг. были переломными."),
+            "тысяча девятьсот шестидесятые годы были переломными.",
+        )
+
     def test_normalize_treats_unary_minus_as_spoken_minus(self):
         self.assertEqual(
             normalize("при -20°C и -1 %"),
