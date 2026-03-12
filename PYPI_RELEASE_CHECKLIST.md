@@ -4,7 +4,6 @@
 
 - Ensure `py -3.12 -m pytest -q` passes.
 - Ensure `ru_normalizr/tests` passes in isolation.
-- Ensure `speakerpy` adapter test still passes.
 - Review `CHANGELOG.md` and add a release entry.
 - Update version in:
   - `ru_normalizr/__init__.py`
@@ -43,6 +42,5 @@ py -3.12 -m twine upload ./ru_normalizr/dist/*
 
 - No generated cache files are committed.
 - No `build/`, `dist/`, or `*.egg-info/` directories are committed.
-- No `speakerpy` imports appear anywhere in `ru_normalizr/`.
 - Optional `eng_to_ipa` behavior degrades gracefully when not installed.
 - CLI works from stdin and inline text.

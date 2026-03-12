@@ -1,0 +1,12 @@
+# User-defined dictionary overrides for ru-normalizr.
+# Format:
+# source=replacement
+#
+# `*` is supported in source patterns as a wildcard for non-space characters.
+# — is a comment.
+# 
+# Examples:
+# *Tube=тюб
+# Open*=оупен
+# YouTube=ютуб
+# OpenAI=оупэнэйай

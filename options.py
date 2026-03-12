@@ -21,7 +21,7 @@ class NormalizeOptions:
     enable_dictionary_normalization: bool = False
     enable_latinization: bool = True
     latinization_backend: Literal["ipa", "dictionary"] = "ipa"
-    latin_dictionary_filename: str = "65_ЛАТИНИЦА@.dic"
+    latin_dictionary_filename: str = "latinization_rules.dic"
     dictionary_include_files: tuple[str, ...] = ()
     dictionary_exclude_files: tuple[str, ...] = ()
     dictionaries_path: Optional[Path] = None

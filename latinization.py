@@ -169,7 +169,7 @@ def apply_latinization(
     enabled: bool,
     backend: str,
     dictionaries_path: Path | None = None,
-    dictionary_filename: str = "65_ЛАТИНИЦА@.dic",
+    dictionary_filename: str = "latinization_rules.dic",
 ) -> str:
     if not enabled or not re.search(r"[A-Za-z]", text):
         return text

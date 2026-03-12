@@ -288,22 +288,7 @@ class RuNormalizrApiTests(unittest.TestCase):
         package_dir = Path(__import__("ru_normalizr").__file__).resolve().parent
 
         self.assertTrue((package_dir / "py.typed").exists())
-        self.assertTrue((package_dir / "dictionaries" / "65_ЛАТИНИЦА@.dic").exists())
-
-    def test_stage_module_import_does_not_pull_speakerpy(self):
-        completed = subprocess.run(
-            [
-                sys.executable,
-                "-c",
-                "import sys; import ru_normalizr.roman_numerals; "
-                "print(any(name.startswith('speakerpy') for name in sys.modules))",
-            ],
-            text=True,
-            capture_output=True,
-            check=True,
-        )
-
-        self.assertEqual(completed.stdout.strip(), "False")
+        self.assertTrue((package_dir / "dictionaries" / "latinization_rules.dic").exists())
 
     def test_package_builds_as_wheel_from_package_directory(self):
         repo_root = Path(__file__).resolve().parents[2]
@@ -331,26 +316,11 @@ class RuNormalizrApiTests(unittest.TestCase):
                 any(path.suffix == ".whl" for path in Path(dist_dir).iterdir())
             )
 
-    def test_latinization_module_import_does_not_pull_speakerpy(self):
-        completed = subprocess.run(
-            [
-                sys.executable,
-                "-c",
-                "import sys; import ru_normalizr.latinization; "
-                "print(any(name.startswith('speakerpy') for name in sys.modules))",
-            ],
-            text=True,
-            capture_output=True,
-            check=True,
-        )
-
-        self.assertEqual(completed.stdout.strip(), "False")
-
     def test_dictionary_rules_can_be_toggled(self):
         options = NormalizeOptions(
             enable_latinization=False,
             enable_dictionary_normalization=True,
-            dictionary_include_files=("65_ЛАТИНИЦА@.dic",),
+            dictionary_include_files=("latinization_rules.dic",),
         )
 
         result = normalize("YouTube", options)

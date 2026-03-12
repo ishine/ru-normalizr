@@ -7,7 +7,7 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 ## [0.1.0] - 2026-03-11
 
 ### Added
-- Initial standalone `ru_normalizr` package extracted from the `speakerpy` normalization workflow.
+- Initial standalone `ru_normalizr` package extracted from private TTS workflow.
 - Public Python API: `normalize`, `Normalizer`, `normalize_batch`, `run_stage`, and `preprocess_text`.
 - Standalone CLI via `python -m ru_normalizr` and `ru-normalizr`.
 - Fixed-order normalization pipeline for:
@@ -21,11 +21,11 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 - Native dictionary loader for `.dic` files.
 - Library test suite moved into `ru_normalizr/tests`.
 - Package metadata, typing marker, and wheel build support.
+- PEP8 formatted.
 
 ### Changed
-- Removed runtime dependency on `speakerpy` from `ru_normalizr`.
 - Consolidated morphology loading through a shared cached helper.
 - Expanded parity coverage against legacy normalization behavior.
 
 ### Notes
-- TTS-specific pause hacks, pronunciation logic, accentization, and audio/model integration remain intentionally out of scope.
+- TTS-specific pause hacks, pronunciation logic, accentization, and audio/model integration remain intentionally out of scope. ru-normalizr is only handling book normalization.

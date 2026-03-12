@@ -8,13 +8,12 @@ version = "0.1.0"
 description = "Normalization-only Russian text preprocessing."
 readme = "README.md"
 requires-python = ">=3.10"
-license = {file = "LICENSE"}
+license = "MIT"
 authors = [{name = "nenavision"}]
 keywords = ["russian", "normalization", "nlp", "text-processing", "tts"]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Developers",
-  "License :: OSI Approved :: MIT License",
   "Natural Language :: Russian",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",
