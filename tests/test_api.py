@@ -295,6 +295,12 @@ class RuNormalizrApiTests(unittest.TestCase):
             "тысяча девятьсот шестидесятые годы были переломными.",
         )
 
+    def test_normalize_inflects_short_decade_abbreviation_with_preposition(self):
+        self.assertEqual(
+            normalize("В 60-х гг. многие молодые люди были не согласны."),
+            "В шестидесятых годах многие молодые люди были не согласны.",
+        )
+
     def test_normalize_treats_unary_minus_as_spoken_minus(self):
         self.assertEqual(
             normalize("при -20°C и -1 %"),

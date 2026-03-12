@@ -154,6 +154,31 @@ def normalize_years(text: str, options: NormalizeOptions | None = None) -> str:
         re.IGNORECASE | re.UNICODE,
     )
 
+    def infer_suffix_case(match: re.Match[str], suffix: str) -> str:
+        default_case = YEAR_SUFFIX_TO_CASE.get(suffix, "nomn")
+        if suffix not in {"х", "м"}:
+            return default_case
+        left_context = text[max(0, match.start() - 30) : match.start()]
+        prep_match = re.search(
+            r"(?:^|[\s«\"'(])(?P<prep>в|во|о|об|к|ко|с|со|до|от|из|по)\s*$",
+            left_context,
+            re.IGNORECASE | re.UNICODE,
+        )
+        if not prep_match:
+            return default_case
+        prep = prep_match.group("prep").lower()
+        if suffix == "х":
+            if prep in {"в", "во", "о", "об"}:
+                return "loct"
+            if prep in {"с", "со", "до", "от", "из"}:
+                return "gent"
+        if suffix == "м":
+            if prep in {"в", "во", "о", "об"}:
+                return "loct"
+            if prep in {"к", "ко", "по"}:
+                return "datv"
+        return default_case
+
     def replace_range_decade(m: re.Match[str]) -> str:
         case = YEAR_SUFFIX_TO_CASE.get(m.group("suffix").lower(), "nomn")
         result = (
@@ -188,7 +213,7 @@ def normalize_years(text: str, options: NormalizeOptions | None = None) -> str:
         suffix = m.group(2).lower()
         word = m.group(3)
         plural = suffix in PLURAL_SUFFIXES
-        case = YEAR_SUFFIX_TO_CASE.get(suffix, "nomn")
+        case = infer_suffix_case(m, suffix)
         if plural:
             if year < 100 and not word:
                 return m.group(0)
