@@ -10,3 +10,4 @@ dist/
 .tmp_dist/
 *.whl
 *.tar.gz
+__pycache__/

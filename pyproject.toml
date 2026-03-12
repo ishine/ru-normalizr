@@ -9,7 +9,7 @@ description = "Normalization-only Russian text preprocessing."
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
-authors = [{name = "nenavision"}]
+authors = [{name = "NickZaitsev"}]
 keywords = ["russian", "normalization", "nlp", "text-processing", "tts"]
 classifiers = [
   "Development Status :: 4 - Beta",
@@ -29,10 +29,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/nenavision/ru-normalizr"
-Repository = "https://github.com/nenavision/ru-normalizr"
-Issues = "https://github.com/nenavision/ru-normalizr/issues"
-Changelog = "https://github.com/nenavision/ru-normalizr/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/NickZaitsev/ru-normalizr"
+Repository = "https://github.com/NickZaitsev/ru-normalizr"
+Issues = "https://github.com/NickZaitsev/ru-normalizr/issues"
+Changelog = "https://github.com/NickZaitsev/ru-normalizr/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 ipa = ["eng_to_ipa"]
