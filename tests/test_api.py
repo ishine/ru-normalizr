@@ -572,7 +572,7 @@ class RuNormalizrApiTests(unittest.TestCase):
             (package_dir / "dictionaries" / "latinization" / "latinization_rules.dic").exists()
         )
         self.assertTrue((package_dir / "numerals" / "__init__.py").exists())
-        self.assertFalse((package_dir / "dictionaries" / "your_rules.dic").exists())
+        self.assertFalse((package_dir / "dictionaries" / "your_dictionary.dic").exists())
 
     def test_package_builds_as_wheel_from_package_directory(self):
         repo_root = _find_source_root()
@@ -610,7 +610,7 @@ class RuNormalizrApiTests(unittest.TestCase):
             )
             self.assertIn("ru_normalizr/numerals/__init__.py", wheel_names)
             self.assertNotIn("ru_normalizr/preprocess.py", wheel_names)
-            self.assertNotIn("ru_normalizr/dictionaries/your_rules.dic", wheel_names)
+            self.assertNotIn("ru_normalizr/dictionaries/your_dictionary.dic", wheel_names)
             self.assertFalse(any(name.startswith("ru_normalizr/tests/") for name in wheel_names))
             self.assertFalse(any(name.startswith("ru_normalizr/scripts/") for name in wheel_names))
             self.assertFalse(any(name.startswith("ru_normalizr/examples/") for name in wheel_names))

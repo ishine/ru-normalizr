@@ -262,8 +262,6 @@ def normalize_cardinal_numerals(text: str) -> str:
 
 
 def normalize_numeric_unit_ranges(text: str) -> str:
-    morph = get_morph()
-
     def repl(match: re.Match[str]) -> str:
         left = match.group("left")
         right = match.group("right")

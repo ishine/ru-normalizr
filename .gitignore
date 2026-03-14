@@ -1,5 +1,6 @@
 __pycache__/
 .pytest_cache/
+.ruff_cache/
 build/
 dist/
 *.egg-info/
@@ -10,4 +11,3 @@ dist/
 .tmp_dist/
 *.whl
 *.tar.gz
-__pycache__/

@@ -7,8 +7,8 @@ from ..preprocess_utils import NEGATIVE_NUMBER_PLACEHOLDER
 from ._constants import UNIT_TOKEN_FRAGMENT, UNITS_DATA
 from ._helpers import (
     get_numeral_case,
-    inflect_unit_lemma,
     inflect_numeral_string,
+    inflect_unit_lemma,
     safe_inflect,
     should_keep_decimal_unit_dot,
     simple_tokenize,

@@ -3,7 +3,7 @@
 # source=replacement
 #
 # `*` is supported in source patterns as a wildcard for non-space characters.
-# This file is an example only and is not packaged into the wheel.
+# Copy this file into `dictionaries/` if you want the rules to auto-apply locally.
 #
 # Examples:
 # *Tube=тюб

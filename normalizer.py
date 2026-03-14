@@ -25,6 +25,7 @@ from .numerals import (
 from .options import NormalizeOptions
 from .preprocess_utils import (
     SLASH_FIX_PATTERN,
+    UNIT_SLASH_PLACEHOLDER,
     apply_cleanup_replacements,
     clean_numbers,
     expand_years_ago_abbreviation,
@@ -33,14 +34,13 @@ from .preprocess_utils import (
     normalize_punctuation_spacing,
     normalize_spaced_hyphens,
     normalize_unicode_fractions,
-    protect_unit_slashes,
     protect_letter_hyphens,
     protect_negative_numbers,
+    protect_unit_slashes,
     remove_decorative_separators,
     remove_numeric_footnotes,
     restore_letter_hyphens,
     restore_paragraph_breaks,
-    UNIT_SLASH_PLACEHOLDER,
 )
 from .roman_numerals import normalize_roman
 from .years import normalize_numeric_ranges, normalize_years

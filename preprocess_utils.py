@@ -64,7 +64,9 @@ SIGNED_INTEGER_WITH_UNIT_PATTERN = re.compile(
 )
 INTEGER_LIST_PATTERN = re.compile(r"^\d+(?:\s*,\s*\d+)+$")
 INTEGER_RANGE_PATTERN = re.compile(r"^\d+\s*[–—-]\s*\d+$")
-SPACE_INSIDE_QUOTES_PATTERN = re.compile(r'"\s+([^\n"]+?)\s+"')
+SPACE_INSIDE_QUOTES_PATTERN = re.compile(
+    r'(^|[\s([{\-–—,;:])"\s+([^\n"]+?)\s+"(?=$|[\s)\]}\-–—,.;:!?])'
+)
 SPACE_AFTER_OPEN_QUOTE_PATTERN = re.compile(
     r'(^|[\s([{\-–—,;:])"([ \t]+)(?=\S)'
 )
@@ -95,7 +97,7 @@ def normalize_ascii_quote_pairs(text: str) -> str:
     )
     for old, new in replacements:
         text = text.replace(old, new)
-    text = SPACE_INSIDE_QUOTES_PATTERN.sub(r'"\1"', text)
+    text = SPACE_INSIDE_QUOTES_PATTERN.sub(r'\1"\2"', text)
     text = SPACE_AFTER_OPEN_QUOTE_PATTERN.sub(r'\1"', text)
     return SPACE_BEFORE_CLOSE_QUOTE_PATTERN.sub('"', text)
 
